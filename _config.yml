@@ -1,7 +1,7 @@
 # Site settings
 title: wyf Blog
 SEOTitle: wyf的博客 | FlipingY_Ame
-header-img: img/home-bg.jpg
+header-img: img/title.jpg
 email: 107337643@qq.com
 description: "你棋差一招啊！"
 keyword: "genshin"
@@ -79,7 +79,7 @@ netease_comment: false
 # Sidebar settings
 sidebar: true                           # whether or not using Sidebar.
 sidebar-about-description: "感觉一般"
-sidebar-avatar: https://github.com/Huxpro.png # use absolute URL, seeing it's used in both `/` and `/about/`
+#sidebar-avatar: https://github.com/Huxpro.png # use absolute URL, seeing it's used in both `/` and `/about/`
 
 
 
