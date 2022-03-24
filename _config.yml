@@ -100,14 +100,15 @@ page-mathjax: false
 
 
 
-# Friends
-# friends: [
-#     {
-#     #     title: "Su",
-#     #     href: "http://su.gallery/"
-#     # },{
+Friends
+friends: [
+    {
+        title: "Confident_J",
+        href: "http://su.gallery/"
+      }
+#      ,{
 #         title: "乱序（Midare）",
-#         href: "http://mida.re/"
+#         href: "http://https://wassuhj.github.io/"
 #     },{
 #         title: "Sherry Woo",
 #         href: "https://sherrywoo.me/"
@@ -130,4 +131,4 @@ page-mathjax: false
 #         title: "尹峰以为",
 #         href: "http://ingf.github.io/"
 #     }
-# ]
+]
