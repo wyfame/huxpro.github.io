@@ -1,0 +1,346 @@
+# SQL查询语言
+
+## 单表查询
+
+> 基本的SELECT-FROM-WHERE语句块就不再赘述
+
+### 字符串匹配
+
+WHERE 子句中可以对字符串进行模版匹配，形如：
+
+```mysql
+WHERE <Attribute> LIKE <pattern> 
+or <Attribute> NOT LIKE <pattern>
+```
+
+pattern通配符：
+
+- % (百分号) 代表任意长度（长度可以为0）的字符串
+- _ (下横线) 代表任意单个字符
+
+> 查询名字中第2个字为"阳"字的学生的姓名和学号
+
+```mysql
+SELECT Sname，Sno
+FROM Student
+WHERE Sname LIKE '__阳%';
+```
+
+### ORDER BY子句
+
+- 可以按一个或多个属性列排序
+- 升序：ASC；降序：DESC；缺省值为升序
+
+> 查询全体学生情况，查询结果按所在系的系号升序排列，同一系中的学生按年龄降序排列
+
+```mysql
+SELECT *
+FROM Student
+ORDER BY Sdept，Sage DESC；
+```
+
+### GROUP BY 子句
+
+- 细化集函数的作用对象
+- 未对查询结果分组时，集函数将作用于整个查询结果
+- 对查询结果分组后，集函数将分别作用于每个组
+
+### Having短语
+
+- 只有满足HAVING短语指定条件的组才输出
+- HAVING短语与WHERE子句的区别：作用对象不同
+  - WHERE子句作用于基表或视图，从中选择满足条件的元组
+  - HAVING短语作用于组，从中选择满足条件的组。
+
+- HAVING子句中出现的列只能是在group by子句或集函数中出
+
+  现的列
+
+> 查询有3门以上课程是90分以上的学生的学号及（90分以上的）课程数
+
+```mysql
+SELECT Sno, COUNT(*)
+FROM SC
+WHERE Grade>=90
+GROUP BY Sno
+HAVING COUNT(*)>=3;
+```
+
+## 多表查询
+
+### 连接查询
+
+> 一般在where子句中给出连接两个表的条件
+
+- 广义笛卡尔积
+
+  不带连接谓词的连接
+
+```mysql
+SELECT Student.* , SC.*
+FROM Student, SC
+```
+
+- 等值连接
+
+where子句中连接运算符为'='的连接操作
+
+```mysql
+SELECT Student.sno，sname, cno
+FROM Student，SC
+WHERE Student.sno = SC.sno；
+```
+
+- 自然连接
+
+等值连接的一种特殊情况，把目标列中重复的属性列去掉
+
+- 内连接
+
+一般格式如下：
+
+```mysql
+SELECT <属性或表达式列表>
+FROM <表名> [INNER] JOIN <表名>
+ON <连接条件> 
+[WHERE <限定条件>]
+```
+
+INNER可省略
+
+- 自连接
+  - 一个表与其自己进行连接
+  - 需要给表的两个副本起别名以示区别
+  - 由于所有属性名都是同名属性，因此必须使用别名前缀
+
+```mysql
+SELECT FIRST.Cno，SECOND.Cpno
+FROM Course AS FIRST，Course AS SECOND
+WHERE FIRST.Cpno = SECOND.Cno；
+```
+
+- 外连接
+
+普通连接操作只输出满足连接条件的元组；外连接操作以指定表为连接主体，将主体表中不满足连接条件的元组一
+
+并输出
+
+> Mysql不支持全外连接，使用left join、right join
+
+例：查询每个学生及其选修课程的情况包括没有选修课程的学生
+
+```mysql
+SELECT Student.Sno，Sname，Ssex，Sage，Sdept，Cno，Grade
+FROM Student，SC
+WHERE Student Right Join SC 
+on Student.Sno =SC.Sno；
+```
+
+> 右连接的作用是：返回指定右表的全部行+左表对应的行，如果右表中数据在左表中没有与其相匹配的行，则在查询结果集中显示为空值。 （此处'没有选修课程的学生'即选课数据中查无此人；若用左连接，则会在学生列中显示Null）
+
+- 复合条件连接
+
+WHERE子句中含多个连接条件时，称为复合条件连接
+
+例：查询选修2号课程且成绩在90分以上的所有学生的学号、姓名
+
+```mysql
+SELECT Student.Sno, student.Sname
+FROM Student, SC
+WHERE Student.Sno = SC.Sno AND
+SC.Cno= '2' and  SC.Grade > 90; 
+```
+
+------
+
+## 子查询
+
+- 一个SELECT-FROM-WHERE语句称为一个查询块
+- 通常将一个查询块嵌套在另一个查询块的WHERE子句或HAVING短语的条件中（称为嵌套查询）
+
+如：
+
+```mysql
+SELECT Sname /*外层查询/父查询*/
+FROM Student
+WHERE Sno IN
+	(SELECT Sno /*内层查询/子查询*/
+	FROM SC
+	WHERE Cno= ' 2 ')
+```
+
+### 1、子查询分类
+
+- 相关子查询
+  - 子查询的查询条件依赖于父查询
+    - 首先取外层查询中表的第一个元组，根据它与内层查询相关的属性值处理内层查询，若WHERE子句返回值为真，则取此元组放入结果表；
+    - 然后再取外层表的下一个元组；
+    - 重复这一过程，直至外层表全部检查完为止。
+
+- 不相关子查询
+  - 由里向外逐层处理。即每个子查询在上一级查询处理之前求解，子查询的结果用于建立其父查询的查找条件
+
+### 2、子查询谓词
+
+#### 2.1带有IN谓词的子查询
+
+1. 若要查询与“刘晨”在同一个系学习的学生。此查询可以分步来完成
+
+```mysql
+/*① 确定“刘晨”所在系名（是‘IS’系）*/
+SELECT Sdept FROM Student 
+WHERE Sname= '刘晨';
+/* ② 查找所有在IS系学习的学生。*/
+SELECT Sno，Sname，Sdept
+FROM Student 
+WHERE Sdept= 'IS';
+```
+
+> 此时可以用IN将第一步查询嵌入到第二步查询的条件中
+
+```mysql
+SELECT Sno，Sname，Sdept FROM Student
+WHERE Sdept IN
+	(SELECT Sdept FROM Student
+	WHERE Sname= ‘ 刘晨 ’);
+/*此为不相关子查询*/
+```
+
+2.还可以多层嵌套：
+
+> 查询选修了课程名为“信息系统”的学生学号和姓名
+
+```mysql
+SELECT Sno，Sname /*③ 最后在Student关系中取出Sno和Sname*/
+FROM Student 
+WHERE Sno IN
+	(SELECT Sno /*② 然后在SC关系中找出选修了3号课程的学生学号*/
+	FROM SC 
+	WHERE Cno IN
+		(SELECT Cno /*① 首先在Course关系中找出“信息系统”的课程号，结果为3号*/
+		FROM Course 
+		WHERE Cname= ‘信息系统’));
+```
+
+- 本例还可用连接查询如下：
+
+```mysql
+SELECT Sno，Sname
+FROM Student，SC，Course
+WHERE Student.Sno = SC.Sno AND
+	  SC.Cno = Course.Cno AND
+	  Course.Cname=‘信息系统’；
+```
+
+3.当能确切知道内层查询返回单值时，可用比较运算符（> ，<，=，>=，<=，!=或< >）
+
+> 假设一个学生只可能在一个系学习，并且必须属于一个系，则在[例1]中可以用 **= 代替IN**
+
+```mysql
+SELECT Sno，Sname，Sdept FROM Student
+WHERE Sdept =
+	SELECT Sdept FROM Student
+		WHERE Sname= ' 刘晨 '；
+```
+
+#### 2.2 带有ANY或ALL谓词的子查询
+
+- ANY：任意一个值
+- ALL：所有值
+- 与比较运算符配合使用
+
+> 查询其他系中比信息系任意一个(其中某一个)学生年龄小的学生姓名和年龄
+
+```mysql
+SELECT Sname，Sage
+FROM Student
+WHERE Sage < ANY (SELECT Sage
+				FROM Student
+				WHERE Sdept= ' IS ')
+AND Sdept <> ' IS ';
+```
+
+- ANY和ALL谓词有时可以用集函数实现
+- 用集函数实现子查询通常比直接用ANY或ALL查询效率要高，因为前者通常能够减少比较次数
+
+> 上题可用集函数实现
+
+```mysql
+SELECT Sname，Sage
+FROM Student
+WHERE Sage < (SELECT MAX(Sage)
+			  FROM Student
+			  WHERE Sdept= ' IS ')
+AND Sdept <> ' IS ’;
+```
+
+#### 2.3 带有Exists谓词的子查询
+
+- 存在量词
+- 带有EXISTS谓词的子查询不返回任何数据，只产生逻辑真值“true”或逻辑假值“false”。
+- 由EXISTS引出的子查询，其目标列表达式通常都用* ，因为带EXISTS的子查询只返回真值或假值，给出列名无实际意义
+
+![image-20220406185216406](C:\Users\WYF\AppData\Roaming\Typora\typora-user-images\image-20220406185216406.png)
+
+1. 逐行考察A中元组；A中第一行元组, a=1
+2. 考察EXISTS子句里的查询，看其是否选中了元组；该子句此时相当于: `Select * from B where a=1`，选中第一行元组；因此EXISTS子句返回TRUE
+3. 当Exists子句返回TRUE时，最外层查询所考察的元组被选中；因此A表第一行被选中了
+4. 同理考察第二行，不被选中。
+
+因此最终结果是：
+![image-20220406185453831](C:\Users\WYF\AppData\Roaming\Typora\typora-user-images\image-20220406185453831.png)
+
+> 查询所有选修了1号课程的学生姓名。
+
+```mysql
+SELECT Sname
+FROM Student
+WHERE EXISTS
+	(SELECT *
+	FROM SC /*相关子查询*/
+	WHERE Sno=Student.Sno AND Cno= '1')；
+```
+
+- 本查询涉及Student和SC关系。
+- 在Student中依次取每个元组的Sno值，用此值去检查SC关系。
+- 若SC中存在这样的元组，其Sno值等于此Student.Sno值，并且其Cno= '1'，则取此Student.Sname送入结果关系。
+
+> 用EXISTS/NOT EXISTS实现全称量词
+
+- SQL语言中没有全称量词
+
+- 可以把带有全称量词的谓词转换为等价的带有存在量词的谓词：
+  $$
+  (\forall{x})P ≡ ¬ (\exists{x}(¬ P))
+  $$
+
+  > 查询选修了全部课程的学生姓名
+
+```mysql
+SELECT Sname FROM Student
+WHERE NOT EXISTS
+	(SELECT * FROM Course
+	WHERE NOT EXISTS
+		(SELECT * FROM SC
+		WHERE Sno= Student.Sno
+		AND Cno= Course.Cno)；
+```
+
+------
+
+### 集合查询
+
+- 并操作 ( subquery ) UNION ( subquery )
+
+> 查询计算机科学系的学生及年龄不大于19岁的学生
+
+```mysql
+SELECT *
+FROM Student
+WHERE Sdept= 'CS'
+UNION
+SELECT *
+FROM Student
+WHERE Sage<=19；
+```
+
