@@ -16,8 +16,8 @@ RSS: false
 # weibo_username:     huxpro
 zhihu_username:     后来时间都与你有关
 github_username:    wyfame
-# twitter_username:   huxpro
-#facebook_username:  huxpro
+# twitter_username:   
+#facebook_username:  
 #linkedin_username:  firstname-lastname-idxxxx
 
 
@@ -72,7 +72,7 @@ ba_track_id: 498d99bd1a01aeee417e2b51a3e546c0
 
 # Google Analytics
 # ga_track_id: 'UA-49627206-1'            # Format: UA-xxxxxx-xx
-# ga_domain: huangxuan.me
+# ga_domain: wyf.me
 
 
 
